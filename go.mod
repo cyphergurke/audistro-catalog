@@ -1,6 +1,6 @@
 module audistro-catalog
 
-go 1.26.0
+go 1.26
 
 require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.5
