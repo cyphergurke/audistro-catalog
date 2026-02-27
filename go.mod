@@ -1,4 +1,4 @@
-module github.com/you/audiostr/audicatalog
+module github.com/cyphergurke/audistro-catalog
 
 go 1.26.0
 
