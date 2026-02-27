@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cyphergurke/audistro-catalog/internal/model"
+	"audistro-catalog/internal/model"
 )
 
 const (

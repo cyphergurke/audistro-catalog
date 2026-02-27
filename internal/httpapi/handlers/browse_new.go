@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"sort"
 
-	artistsvc "github.com/cyphergurke/audistro-catalog/internal/service/artists"
-	assetsvc "github.com/cyphergurke/audistro-catalog/internal/service/assets"
+	artistsvc "audistro-catalog/internal/service/artists"
+	assetsvc "audistro-catalog/internal/service/assets"
 )
 
 type BrowseNewResponse struct {

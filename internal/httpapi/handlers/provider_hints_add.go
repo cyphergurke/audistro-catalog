@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	assetsvc "github.com/cyphergurke/audistro-catalog/internal/service/assets"
+	assetsvc "audistro-catalog/internal/service/assets"
 )
 
 type AddProviderHintRequest struct {

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/model"
-	verifsvc "github.com/cyphergurke/audistro-catalog/internal/service/verification"
-	"github.com/cyphergurke/audistro-catalog/internal/store/repo"
+	"audistro-catalog/internal/model"
+	verifsvc "audistro-catalog/internal/service/verification"
+	"audistro-catalog/internal/store/repo"
 )
 
 type Worker struct {

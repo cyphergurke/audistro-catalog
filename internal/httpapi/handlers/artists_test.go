@@ -10,16 +10,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cyphergurke/audistro-catalog/internal/httpapi/middleware"
-	"github.com/cyphergurke/audistro-catalog/internal/noncecache"
-	"github.com/cyphergurke/audistro-catalog/internal/providerhints"
-	artistsvc "github.com/cyphergurke/audistro-catalog/internal/service/artists"
-	assetsvc "github.com/cyphergurke/audistro-catalog/internal/service/assets"
-	payeessvc "github.com/cyphergurke/audistro-catalog/internal/service/payees"
-	providersvc "github.com/cyphergurke/audistro-catalog/internal/service/providers"
-	reportsvc "github.com/cyphergurke/audistro-catalog/internal/service/reports"
-	"github.com/cyphergurke/audistro-catalog/internal/store"
-	storesqlite "github.com/cyphergurke/audistro-catalog/internal/store/sqlite"
+	"audistro-catalog/internal/httpapi/middleware"
+	"audistro-catalog/internal/noncecache"
+	"audistro-catalog/internal/providerhints"
+	artistsvc "audistro-catalog/internal/service/artists"
+	assetsvc "audistro-catalog/internal/service/assets"
+	payeessvc "audistro-catalog/internal/service/payees"
+	providersvc "audistro-catalog/internal/service/providers"
+	reportsvc "audistro-catalog/internal/service/reports"
+	"audistro-catalog/internal/store"
+	storesqlite "audistro-catalog/internal/store/sqlite"
 )
 
 type testApp struct {

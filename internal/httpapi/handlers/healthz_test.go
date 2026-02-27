@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cyphergurke/audistro-catalog/internal/httpapi/middleware"
+	"audistro-catalog/internal/httpapi/middleware"
 )
 
 func TestHealthzReturnsOKJSON(t *testing.T) {

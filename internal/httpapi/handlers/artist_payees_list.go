@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	payeessvc "github.com/cyphergurke/audistro-catalog/internal/service/payees"
+	payeessvc "audistro-catalog/internal/service/payees"
 )
 
 type PayeesListResponse struct {

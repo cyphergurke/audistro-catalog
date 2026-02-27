@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/noncecache"
-	"github.com/cyphergurke/audistro-catalog/internal/validate"
-	providersvc "github.com/cyphergurke/audistro-catalog/internal/service/providers"
+	"audistro-catalog/internal/noncecache"
+	"audistro-catalog/internal/validate"
+	providersvc "audistro-catalog/internal/service/providers"
 )
 
 type AnnounceProviderRequest struct {

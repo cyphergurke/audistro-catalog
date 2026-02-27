@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/cyphergurke/audistro-catalog/internal/httpapi/middleware"
+	"audistro-catalog/internal/httpapi/middleware"
 )
 
 type APIError struct {

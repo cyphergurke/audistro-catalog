@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/ratelimit"
+	"audistro-catalog/internal/ratelimit"
 )
 
 func withRateLimit(next http.HandlerFunc, limiter *ratelimit.Limiter) http.HandlerFunc {

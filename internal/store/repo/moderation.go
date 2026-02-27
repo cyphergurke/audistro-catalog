@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 
-	"github.com/cyphergurke/audistro-catalog/internal/model"
+	"audistro-catalog/internal/model"
 )
 
 type UpsertModerationStateParams struct {

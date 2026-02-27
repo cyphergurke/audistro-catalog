@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/model"
-	"github.com/cyphergurke/audistro-catalog/internal/store/repo"
+	"audistro-catalog/internal/model"
+	"audistro-catalog/internal/store/repo"
 )
 
 var _ repo.ProofsRepository = (*ProofsRepo)(nil)

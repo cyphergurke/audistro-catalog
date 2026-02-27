@@ -6,10 +6,10 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/cyphergurke/audistro-catalog/internal/config"
-	"github.com/cyphergurke/audistro-catalog/internal/store"
-	storesqlite "github.com/cyphergurke/audistro-catalog/internal/store/sqlite"
-	"github.com/cyphergurke/audistro-catalog/internal/worker/proofcheck"
+	"audistro-catalog/internal/config"
+	"audistro-catalog/internal/store"
+	storesqlite "audistro-catalog/internal/store/sqlite"
+	"audistro-catalog/internal/worker/proofcheck"
 )
 
 func main() {

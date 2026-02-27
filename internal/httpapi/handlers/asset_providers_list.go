@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/etag"
-	"github.com/cyphergurke/audistro-catalog/internal/providerhints"
-	assetsvc "github.com/cyphergurke/audistro-catalog/internal/service/assets"
-	providersvc "github.com/cyphergurke/audistro-catalog/internal/service/providers"
-	"github.com/cyphergurke/audistro-catalog/internal/validate"
+	"audistro-catalog/internal/etag"
+	"audistro-catalog/internal/providerhints"
+	assetsvc "audistro-catalog/internal/service/assets"
+	providersvc "audistro-catalog/internal/service/providers"
+	"audistro-catalog/internal/validate"
 )
 
 var playbackAssetIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,128}$`)

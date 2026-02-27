@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	artistsvc "github.com/cyphergurke/audistro-catalog/internal/service/artists"
+	artistsvc "audistro-catalog/internal/service/artists"
 )
 
 func GetArtistByHandleHandler(service *artistsvc.Service) http.HandlerFunc {

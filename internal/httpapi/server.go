@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/cyphergurke/audistro-catalog/internal/config"
-	"github.com/cyphergurke/audistro-catalog/internal/httpapi/handlers"
-	"github.com/cyphergurke/audistro-catalog/internal/httpapi/middleware"
+	"audistro-catalog/internal/config"
+	"audistro-catalog/internal/httpapi/handlers"
+	"audistro-catalog/internal/httpapi/middleware"
 )
 
 // Server wraps the HTTP server.

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/cyphergurke/audistro-catalog/internal/httpapi/middleware"
+	"audistro-catalog/internal/httpapi/middleware"
 )
 
 // HealthzResponse is the typed health check response payload.

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/store/repo"
+	"audistro-catalog/internal/store/repo"
 )
 
 func CleanupExpiredProviderAssetsOnce(ctx context.Context, providersRepo repo.ProviderRegistryRepository, now time.Time) (int64, time.Duration, error) {

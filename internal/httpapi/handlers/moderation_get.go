@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	reportsvc "github.com/cyphergurke/audistro-catalog/internal/service/reports"
+	reportsvc "audistro-catalog/internal/service/reports"
 )
 
 type GetModerationResponse struct {

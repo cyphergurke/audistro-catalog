@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/model"
-	"github.com/cyphergurke/audistro-catalog/internal/store"
-	"github.com/cyphergurke/audistro-catalog/internal/store/repo"
-	storesqlite "github.com/cyphergurke/audistro-catalog/internal/store/sqlite"
+	"audistro-catalog/internal/model"
+	"audistro-catalog/internal/store"
+	"audistro-catalog/internal/store/repo"
+	storesqlite "audistro-catalog/internal/store/sqlite"
 )
 
 type fakeDNSResolver struct {

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/cyphergurke/audistro-catalog/internal/validate"
-	providersvc "github.com/cyphergurke/audistro-catalog/internal/service/providers"
+	"audistro-catalog/internal/validate"
+	providersvc "audistro-catalog/internal/service/providers"
 )
 
 type RegisterProviderRequest struct {

@@ -3,7 +3,7 @@ package proofcheck
 import (
 	"context"
 
-	"github.com/cyphergurke/audistro-catalog/internal/store/repo"
+	"audistro-catalog/internal/store/repo"
 )
 
 type DNSResolver interface {

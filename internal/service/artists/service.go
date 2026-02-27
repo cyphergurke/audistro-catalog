@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	sqlite3 "github.com/mattn/go-sqlite3"
-	"github.com/cyphergurke/audistro-catalog/internal/model"
-	"github.com/cyphergurke/audistro-catalog/internal/store/repo"
+	"audistro-catalog/internal/model"
+	"audistro-catalog/internal/store/repo"
 )
 
 type Service struct {

@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/etag"
-	"github.com/cyphergurke/audistro-catalog/internal/providerhints"
-	assetsvc "github.com/cyphergurke/audistro-catalog/internal/service/assets"
-	payeessvc "github.com/cyphergurke/audistro-catalog/internal/service/payees"
-	providersvc "github.com/cyphergurke/audistro-catalog/internal/service/providers"
-	"github.com/cyphergurke/audistro-catalog/internal/validate"
+	"audistro-catalog/internal/etag"
+	"audistro-catalog/internal/providerhints"
+	assetsvc "audistro-catalog/internal/service/assets"
+	payeessvc "audistro-catalog/internal/service/payees"
+	providersvc "audistro-catalog/internal/service/providers"
+	"audistro-catalog/internal/validate"
 )
 
 func GetPlaybackHandler(

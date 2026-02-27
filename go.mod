@@ -1,4 +1,4 @@
-module github.com/cyphergurke/audistro-catalog
+module audistro-catalog
 
 go 1.26.0
 

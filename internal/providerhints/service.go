@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	providersvc "github.com/cyphergurke/audistro-catalog/internal/service/providers"
+	providersvc "audistro-catalog/internal/service/providers"
 )
 
 type ServiceConfig struct {

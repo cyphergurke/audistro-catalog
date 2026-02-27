@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphergurke/audistro-catalog/internal/model"
-	"github.com/cyphergurke/audistro-catalog/internal/store/repo"
-	"github.com/cyphergurke/audistro-catalog/internal/validate"
+	"audistro-catalog/internal/model"
+	"audistro-catalog/internal/store/repo"
+	"audistro-catalog/internal/validate"
 )
 
 type Service struct {
