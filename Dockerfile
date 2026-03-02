@@ -13,9 +13,16 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     for attempt in 1 2 3 4 5; do /usr/local/go/bin/go mod download && exit 0; sleep $((attempt * 2)); done; exit 1
 
 COPY . .
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/audicatalogd ./cmd/audicatalogd \
-    && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/audicatalog-worker ./cmd/audicatalog-worker \
-    && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/audicatalog-snapshot ./cmd/audicatalog-snapshot
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    for attempt in 1 2 3 4 5; do \
+      CGO_ENABLED=1 GOOS=linux GOARCH=amd64 /usr/local/go/bin/go build -trimpath -ldflags='-s -w' -o /out/audicatalogd ./cmd/audicatalogd \
+      && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 /usr/local/go/bin/go build -trimpath -ldflags='-s -w' -o /out/audicatalog-worker ./cmd/audicatalog-worker \
+      && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 /usr/local/go/bin/go build -trimpath -ldflags='-s -w' -o /out/audicatalog-snapshot ./cmd/audicatalog-snapshot \
+      && exit 0; \
+      sleep $((attempt * 2)); \
+    done; \
+    exit 1
 
 FROM debian:bookworm-slim
 RUN apt-get update \
