@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -30,13 +32,29 @@ const (
 	defaultPlaybackProviderMaxLimit   int64 = 50
 	defaultAPISchemaVersion           int64 = 1
 	defaultHTTPMaxBodyBytes           int64 = 32768
+	defaultAdminUploadMaxBodyBytes    int64 = 268435456
 	defaultETagMaxAgeSeconds          int64 = 5
 	defaultRateLimitAnnounceRPS             = 5.0
 	defaultRateLimitAnnounceBurst     int64 = 10
 	defaultRateLimitPlaybackRPS             = 20.0
 	defaultRateLimitPlaybackBurst     int64 = 40
 	defaultRateLimitCacheTTLSeconds   int64 = 600
+	defaultStoragePath                      = "/var/lib/audistro-catalog"
+	defaultProviderPublicBaseURL            = "http://localhost:18082"
+	defaultProviderInternalBaseURL          = "http://audistro-provider_eu_1:8080"
+	defaultProviderDataPathMount            = "/mnt/providers/eu_1"
+	defaultFAPPublicBaseURL                 = "http://localhost:18081"
+	defaultFAPInternalBaseURL               = "http://audistro-fap:8080"
+	defaultWorkerPollIntervalSeconds  int64 = 2
+	defaultWorkerStaleSeconds         int64 = 300
 )
+
+type ProviderTarget struct {
+	Name            string
+	PublicBaseURL   string
+	InternalBaseURL string
+	DataPathMount   string
+}
 
 // Config holds runtime configuration loaded from environment variables.
 type Config struct {
@@ -66,12 +84,23 @@ type Config struct {
 	PlaybackMaxProviderLimit        int64
 	APISchemaVersion                int
 	HTTPMaxBodyBytes                int64
+	AdminUploadMaxBodyBytes         int64
 	ETagMaxAgeSeconds               int64
 	RateLimitAnnounceRPS            float64
 	RateLimitAnnounceBurst          int64
 	RateLimitPlaybackRPS            float64
 	RateLimitPlaybackBurst          int64
 	RateLimitCacheTTLSeconds        int64
+	AdminToken                      string
+	StoragePath                     string
+	ProviderPublicBaseURL           string
+	ProviderInternalBaseURL         string
+	ProviderTargets                 []ProviderTarget
+	FAPPublicBaseURL                string
+	FAPInternalBaseURL              string
+	FAPAdminToken                   string
+	WorkerPollIntervalSeconds       int64
+	WorkerStaleSeconds              int64
 }
 
 // LoadFromEnv reads configuration from environment variables.
@@ -117,6 +146,7 @@ func LoadFromEnv() Config {
 	playbackMaxProviderLimit := parseInt64OrDefault(os.Getenv("CATALOG_PLAYBACK_MAX_PROVIDER_LIMIT"), defaultPlaybackProviderMaxLimit)
 	apiSchemaVersion := int(parseInt64OrDefault(os.Getenv("CATALOG_API_SCHEMA_VERSION"), defaultAPISchemaVersion))
 	httpMaxBodyBytes := parseInt64OrDefault(os.Getenv("CATALOG_HTTP_MAX_BODY_BYTES"), defaultHTTPMaxBodyBytes)
+	adminUploadMaxBodyBytes := parseInt64OrDefault(os.Getenv("CATALOG_ADMIN_UPLOAD_MAX_BODY_BYTES"), defaultAdminUploadMaxBodyBytes)
 	etagMaxAgeSeconds := parseInt64OrDefault(os.Getenv("CATALOG_ETAG_MAX_AGE_SECONDS"), defaultETagMaxAgeSeconds)
 	rateLimitAnnounceRPS := parseFloatOrDefault(os.Getenv("CATALOG_RL_ANNOUNCE_RPS"), defaultRateLimitAnnounceRPS)
 	rateLimitAnnounceBurst := parseInt64OrDefault(os.Getenv("CATALOG_RL_ANNOUNCE_BURST"), defaultRateLimitAnnounceBurst)
@@ -124,6 +154,37 @@ func LoadFromEnv() Config {
 	rateLimitPlaybackBurst := parseInt64OrDefault(os.Getenv("CATALOG_RL_PLAYBACK_BURST"), defaultRateLimitPlaybackBurst)
 	rateLimitCacheTTLSeconds := parseInt64OrDefault(os.Getenv("CATALOG_RL_CACHE_TTL_SECONDS"), defaultRateLimitCacheTTLSeconds)
 	allowInsecureTransport := parseBoolOrDefault(os.Getenv("CATALOG_ALLOW_INSECURE_TRANSPORT"), false)
+	storagePath := strings.TrimSpace(os.Getenv("CATALOG_STORAGE_PATH"))
+	if storagePath == "" {
+		storagePath = defaultStoragePath
+	}
+	providerPublicBaseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("CATALOG_PROVIDER_PUBLIC_BASE_URL")), "/")
+	if providerPublicBaseURL == "" {
+		providerPublicBaseURL = defaultProviderPublicBaseURL
+	}
+	providerInternalBaseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("CATALOG_PROVIDER_INTERNAL_BASE_URL")), "/")
+	if providerInternalBaseURL == "" {
+		providerInternalBaseURL = defaultProviderInternalBaseURL
+	}
+	providerTargets := parseProviderTargets(strings.TrimSpace(os.Getenv("CATALOG_PROVIDER_TARGETS")))
+	if len(providerTargets) == 0 {
+		providerTargets = []ProviderTarget{{
+			Name:            "primary",
+			PublicBaseURL:   providerPublicBaseURL,
+			InternalBaseURL: providerInternalBaseURL,
+			DataPathMount:   defaultProviderDataPathMount,
+		}}
+	}
+	fapPublicBaseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("FAP_PUBLIC_BASE_URL")), "/")
+	if fapPublicBaseURL == "" {
+		fapPublicBaseURL = defaultFAPPublicBaseURL
+	}
+	fapInternalBaseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("CATALOG_FAP_INTERNAL_BASE_URL")), "/")
+	if fapInternalBaseURL == "" {
+		fapInternalBaseURL = defaultFAPInternalBaseURL
+	}
+	workerPollIntervalSeconds := parseInt64OrDefault(os.Getenv("CATALOG_WORKER_POLL_INTERVAL_SECONDS"), defaultWorkerPollIntervalSeconds)
+	workerStaleSeconds := parseInt64OrDefault(os.Getenv("CATALOG_WORKER_STALE_SECONDS"), defaultWorkerStaleSeconds)
 
 	return Config{
 		HTTPAddr:                        httpAddr,
@@ -152,12 +213,23 @@ func LoadFromEnv() Config {
 		PlaybackMaxProviderLimit:        playbackMaxProviderLimit,
 		APISchemaVersion:                apiSchemaVersion,
 		HTTPMaxBodyBytes:                httpMaxBodyBytes,
+		AdminUploadMaxBodyBytes:         adminUploadMaxBodyBytes,
 		ETagMaxAgeSeconds:               etagMaxAgeSeconds,
 		RateLimitAnnounceRPS:            rateLimitAnnounceRPS,
 		RateLimitAnnounceBurst:          rateLimitAnnounceBurst,
 		RateLimitPlaybackRPS:            rateLimitPlaybackRPS,
 		RateLimitPlaybackBurst:          rateLimitPlaybackBurst,
 		RateLimitCacheTTLSeconds:        rateLimitCacheTTLSeconds,
+		AdminToken:                      strings.TrimSpace(os.Getenv("CATALOG_ADMIN_TOKEN")),
+		StoragePath:                     storagePath,
+		ProviderPublicBaseURL:           providerPublicBaseURL,
+		ProviderInternalBaseURL:         providerInternalBaseURL,
+		ProviderTargets:                 providerTargets,
+		FAPPublicBaseURL:                fapPublicBaseURL,
+		FAPInternalBaseURL:              fapInternalBaseURL,
+		FAPAdminToken:                   strings.TrimSpace(os.Getenv("FAP_ADMIN_TOKEN")),
+		WorkerPollIntervalSeconds:       workerPollIntervalSeconds,
+		WorkerStaleSeconds:              workerStaleSeconds,
 	}
 }
 
@@ -196,4 +268,49 @@ func parseBoolOrDefault(value string, fallback bool) bool {
 		return fallback
 	}
 	return parsed
+}
+
+func parseProviderTargets(raw string) []ProviderTarget {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+
+	targets := make([]ProviderTarget, 0)
+	for _, item := range strings.Split(raw, ",") {
+		parts := strings.Split(strings.TrimSpace(item), "|")
+		if len(parts) != 4 {
+			continue
+		}
+
+		target := ProviderTarget{
+			Name:            strings.TrimSpace(parts[0]),
+			PublicBaseURL:   normalizeURL(parts[1]),
+			InternalBaseURL: normalizeURL(parts[2]),
+			DataPathMount:   strings.TrimRight(strings.TrimSpace(parts[3]), "/"),
+		}
+		if target.Name == "" || target.PublicBaseURL == "" || target.InternalBaseURL == "" || target.DataPathMount == "" {
+			continue
+		}
+		targets = append(targets, target)
+	}
+	return targets
+}
+
+func normalizeURL(raw string) string {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return ""
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return ""
+	}
+	return strings.TrimRight(parsed.String(), "/")
+}
+
+func (c Config) PrimaryProviderTarget() (ProviderTarget, error) {
+	if len(c.ProviderTargets) == 0 {
+		return ProviderTarget{}, fmt.Errorf("no provider targets configured")
+	}
+	return c.ProviderTargets[0], nil
 }

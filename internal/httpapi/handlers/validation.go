@@ -14,6 +14,7 @@ import (
 
 var handlePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_]{2,31}$`)
 var assetIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{3,80}$`)
+var adminIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,128}$`)
 
 type validationError struct {
 	Code    string

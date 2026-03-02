@@ -57,3 +57,56 @@ func TestLoadFromEnvAllowsInsecureTransportFlagInProd(t *testing.T) {
 		t.Fatalf("expected insecure transport enabled via CATALOG_ALLOW_INSECURE_TRANSPORT")
 	}
 }
+
+func TestLoadFromEnvIncludesDevUploadSettings(t *testing.T) {
+	t.Setenv("CATALOG_ENV", "dev")
+	t.Setenv("CATALOG_ADMIN_TOKEN", "dev-admin-token")
+	t.Setenv("CATALOG_PROVIDER_TARGETS", "eu_1|http://localhost:18082|http://audistro-provider_eu_1:8080|/mnt/providers/eu_1,eu_2|http://localhost:18083|http://audistro-provider_eu_2:8080|/mnt/providers/eu_2")
+	t.Setenv("CATALOG_STORAGE_PATH", "/var/lib/audistro-catalog")
+	t.Setenv("CATALOG_FAP_INTERNAL_BASE_URL", "http://audistro-fap:8080")
+	t.Setenv("FAP_PUBLIC_BASE_URL", "http://localhost:18081")
+	t.Setenv("FAP_ADMIN_TOKEN", "fap-admin-token")
+
+	cfg := LoadFromEnv()
+	if cfg.AdminToken != "dev-admin-token" {
+		t.Fatalf("expected admin token to load")
+	}
+	if len(cfg.ProviderTargets) != 2 {
+		t.Fatalf("expected two provider targets, got %d", len(cfg.ProviderTargets))
+	}
+	if cfg.ProviderTargets[0].Name != "eu_1" || cfg.ProviderTargets[0].PublicBaseURL != "http://localhost:18082" || cfg.ProviderTargets[0].InternalBaseURL != "http://audistro-provider_eu_1:8080" || cfg.ProviderTargets[0].DataPathMount != "/mnt/providers/eu_1" {
+		t.Fatalf("unexpected first provider target: %#v", cfg.ProviderTargets[0])
+	}
+	if cfg.ProviderTargets[1].Name != "eu_2" || cfg.ProviderTargets[1].PublicBaseURL != "http://localhost:18083" || cfg.ProviderTargets[1].InternalBaseURL != "http://audistro-provider_eu_2:8080" || cfg.ProviderTargets[1].DataPathMount != "/mnt/providers/eu_2" {
+		t.Fatalf("unexpected second provider target: %#v", cfg.ProviderTargets[1])
+	}
+	if cfg.StoragePath != "/var/lib/audistro-catalog" {
+		t.Fatalf("unexpected storage path %q", cfg.StoragePath)
+	}
+	if cfg.FAPInternalBaseURL != "http://audistro-fap:8080" {
+		t.Fatalf("unexpected fap internal base url %q", cfg.FAPInternalBaseURL)
+	}
+	if cfg.FAPPublicBaseURL != "http://localhost:18081" {
+		t.Fatalf("unexpected fap public base url %q", cfg.FAPPublicBaseURL)
+	}
+	if cfg.FAPAdminToken != "fap-admin-token" {
+		t.Fatalf("unexpected fap admin token %q", cfg.FAPAdminToken)
+	}
+	if cfg.AdminUploadMaxBodyBytes <= 0 {
+		t.Fatalf("expected positive admin upload max body bytes")
+	}
+}
+
+func TestLoadFromEnvFallsBackToSingleProviderTarget(t *testing.T) {
+	t.Setenv("CATALOG_PROVIDER_TARGETS", "")
+	t.Setenv("CATALOG_PROVIDER_PUBLIC_BASE_URL", "http://localhost:18082")
+	t.Setenv("CATALOG_PROVIDER_INTERNAL_BASE_URL", "http://audistro-provider_eu_1:8080")
+
+	cfg := LoadFromEnv()
+	if len(cfg.ProviderTargets) != 1 {
+		t.Fatalf("expected single fallback provider target, got %d", len(cfg.ProviderTargets))
+	}
+	if cfg.ProviderTargets[0].PublicBaseURL != "http://localhost:18082" || cfg.ProviderTargets[0].InternalBaseURL != "http://audistro-provider_eu_1:8080" {
+		t.Fatalf("unexpected fallback provider target: %#v", cfg.ProviderTargets[0])
+	}
+}

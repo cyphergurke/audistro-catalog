@@ -20,6 +20,8 @@ func NewServer(cfg config.Config, logger *log.Logger, deps handlers.Dependencies
 
 	var handler http.Handler = routes
 	handler = middleware.Recover(logger)(handler)
+	handler = middleware.AccessLog(logger)(handler)
+	handler = openAPIValidationMiddleware(handler)
 	handler = middleware.RequestID(handler)
 
 	return &Server{

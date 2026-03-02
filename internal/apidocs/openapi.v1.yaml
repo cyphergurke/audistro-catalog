@@ -1,0 +1,792 @@
+openapi: 3.0.3
+info:
+  title: audistro-catalog API
+  version: 1.0.0
+  description: HTTP API for artists, assets, payees, providers, playback, reports, and dev ingest helpers.
+servers:
+  - url: /
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      operationId: getHealthz
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthzResponse'
+  /openapi.yaml:
+    get:
+      summary: OpenAPI document as YAML
+      operationId: getOpenAPIYAML
+      responses:
+        '200':
+          description: OpenAPI YAML
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /openapi.json:
+    get:
+      summary: OpenAPI document as JSON
+      operationId: getOpenAPIJSON
+      responses:
+        '200':
+          description: OpenAPI JSON
+          content:
+            application/json:
+              schema:
+                type: object
+  /docs:
+    get:
+      summary: Scalar API docs UI
+      operationId: getDocs
+      responses:
+        '200':
+          description: HTML docs UI
+          content:
+            text/html:
+              schema:
+                type: string
+  /v1/admin/bootstrap/artist:
+    post:
+      summary: Bootstrap artist and payee mapping in dev
+      operationId: bootstrapArtist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BootstrapArtistRequest'
+      responses:
+        '200':
+          description: Artist and payee mapping created or reused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BootstrapArtistResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/admin/assets/upload:
+    post:
+      summary: Upload MP3 source and queue ingest job in dev
+      operationId: uploadAdminAsset
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminUploadAssetRequest'
+      responses:
+        '202':
+          description: Upload accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUploadAssetResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/admin/ingest/jobs/{jobId}:
+    get:
+      summary: Get ingest job status in dev
+      operationId: getIngestJob
+      parameters:
+        - $ref: '#/components/parameters/jobId'
+      responses:
+        '200':
+          description: Ingest job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestJobResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/artists:
+    post:
+      summary: Create artist
+      operationId: createArtist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateArtistRequest'
+      responses:
+        '201':
+          description: Artist created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/artists/{handle}:
+    get:
+      summary: Get artist by handle
+      operationId: getArtistByHandle
+      parameters:
+        - $ref: '#/components/parameters/handle'
+      responses:
+        '200':
+          description: Artist details
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/payees:
+    post:
+      summary: Create catalog payee mapping
+      operationId: createPayee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePayeeRequest'
+      responses:
+        '201':
+          description: Payee created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/payees/{payeeId}:
+    get:
+      summary: Get payee
+      operationId: getPayee
+      parameters:
+        - $ref: '#/components/parameters/payeeId'
+      responses:
+        '200':
+          description: Payee details
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/artists/{handle}/payees:
+    get:
+      summary: List payees for artist
+      operationId: listArtistPayees
+      parameters:
+        - $ref: '#/components/parameters/handle'
+      responses:
+        '200':
+          description: Artist payees
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/assets:
+    post:
+      summary: Create asset metadata
+      operationId: createAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAssetRequest'
+      responses:
+        '201':
+          description: Asset created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/assets/{assetId}:
+    get:
+      summary: Get asset
+      operationId: getAsset
+      parameters:
+        - $ref: '#/components/parameters/assetId'
+      responses:
+        '200':
+          description: Asset details
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/artists/{handle}/assets:
+    get:
+      summary: List assets for artist
+      operationId: listArtistAssets
+      parameters:
+        - $ref: '#/components/parameters/handle'
+      responses:
+        '200':
+          description: Artist assets
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/assets/{assetId}/provider-hints:
+    post:
+      summary: Add provider hint to asset
+      operationId: addProviderHint
+      parameters:
+        - $ref: '#/components/parameters/assetId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderHintRequest'
+      responses:
+        '201':
+          description: Provider hint created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+    get:
+      summary: List provider hints for asset
+      operationId: listProviderHints
+      parameters:
+        - $ref: '#/components/parameters/assetId'
+      responses:
+        '200':
+          description: Provider hints
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/reports:
+    post:
+      summary: Create moderation report
+      operationId: createReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+      responses:
+        '201':
+          description: Report created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/moderation/{targetType}/{targetId}:
+    get:
+      summary: Get moderation state for target
+      operationId: getModeration
+      parameters:
+        - $ref: '#/components/parameters/targetType'
+        - $ref: '#/components/parameters/targetId'
+      responses:
+        '200':
+          description: Moderation state
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/browse/artists:
+    get:
+      summary: Browse artists
+      operationId: browseArtists
+      responses:
+        '200':
+          description: Browse artists result
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/browse/new:
+    get:
+      summary: Browse new assets
+      operationId: browseNew
+      responses:
+        '200':
+          description: Browse new result
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/providers:
+    post:
+      summary: Register or update provider
+      operationId: registerProvider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterProviderRequest'
+      responses:
+        '200':
+          description: Provider upserted
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/providers/{providerId}/announce:
+    post:
+      summary: Announce asset availability from provider
+      operationId: announceProvider
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnounceProviderRequest'
+      responses:
+        '200':
+          description: Announcement accepted
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+  /v1/assets/{assetId}/providers:
+    get:
+      summary: List announced providers for asset
+      operationId: listAssetProviders
+      parameters:
+        - $ref: '#/components/parameters/assetId'
+      responses:
+        '200':
+          description: Asset providers
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/playback/{assetId}:
+    get:
+      summary: Resolve playback metadata and provider order
+      operationId: getPlayback
+      parameters:
+        - $ref: '#/components/parameters/assetId'
+        - $ref: '#/components/parameters/playbackRegion'
+        - $ref: '#/components/parameters/providersLimit'
+      responses:
+        '200':
+          description: Playback metadata
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+components:
+  parameters:
+    assetId:
+      name: assetId
+      in: path
+      required: true
+      schema:
+        type: string
+    payeeId:
+      name: payeeId
+      in: path
+      required: true
+      schema:
+        type: string
+    handle:
+      name: handle
+      in: path
+      required: true
+      schema:
+        type: string
+    providerId:
+      name: providerId
+      in: path
+      required: true
+      schema:
+        type: string
+    jobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+    targetType:
+      name: targetType
+      in: path
+      required: true
+      schema:
+        type: string
+    targetId:
+      name: targetId
+      in: path
+      required: true
+      schema:
+        type: string
+    playbackRegion:
+      name: region
+      in: query
+      required: false
+      schema:
+        type: string
+    providersLimit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    APIError:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        request_id:
+          type: string
+    APIErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/APIError'
+    HealthzResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - request_id
+      properties:
+        status:
+          type: string
+        request_id:
+          type: string
+    BootstrapPayeeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - fap_public_base_url
+        - fap_payee_id
+      properties:
+        payee_id:
+          type: string
+        fap_public_base_url:
+          type: string
+          format: uri
+        fap_payee_id:
+          type: string
+    BootstrapArtistRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - handle
+        - display_name
+        - payee
+      properties:
+        artist_id:
+          type: string
+        handle:
+          type: string
+        display_name:
+          type: string
+        pubkey_hex:
+          type: string
+        payee:
+          $ref: '#/components/schemas/BootstrapPayeeRequest'
+    BootstrapArtistResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - artist_id
+        - payee_id
+        - handle
+        - fap_payee_id
+      properties:
+        artist_id:
+          type: string
+        payee_id:
+          type: string
+        handle:
+          type: string
+        fap_payee_id:
+          type: string
+    AdminUploadAssetRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - artist_id
+        - payee_id
+        - title
+        - price_msat
+        - audio
+      properties:
+        artist_id:
+          type: string
+        payee_id:
+          type: string
+        title:
+          type: string
+        price_msat:
+          type: string
+        asset_id:
+          type: string
+        audio:
+          type: string
+          format: binary
+    AdminUploadAssetResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - asset_id
+        - job_id
+        - status
+      properties:
+        asset_id:
+          type: string
+        job_id:
+          type: string
+        status:
+          type: string
+    IngestJobResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - job_id
+        - asset_id
+        - status
+      properties:
+        job_id:
+          type: string
+        asset_id:
+          type: string
+        status:
+          type: string
+        error:
+          type: string
+    CreateArtistRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - pubkey_hex
+        - handle
+        - display_name
+      properties:
+        pubkey_hex:
+          type: string
+        handle:
+          type: string
+        display_name:
+          type: string
+        bio:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+    CreatePayeeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - artist_handle
+        - fap_public_base_url
+        - fap_payee_id
+      properties:
+        artist_handle:
+          type: string
+        fap_public_base_url:
+          type: string
+          format: uri
+        fap_payee_id:
+          type: string
+    CreateAssetProviderHintRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - transport
+        - base_url
+        - priority
+      properties:
+        transport:
+          type: string
+        base_url:
+          type: string
+        priority:
+          type: integer
+          format: int64
+    CreateAssetRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - artist_handle
+        - payee_id
+        - title
+        - duration_ms
+        - content_id
+        - hls_master_url
+        - price_msat
+      properties:
+        asset_id:
+          type: string
+        artist_handle:
+          type: string
+        payee_id:
+          type: string
+        title:
+          type: string
+        duration_ms:
+          type: integer
+          format: int64
+        content_id:
+          type: string
+        hls_master_url:
+          type: string
+          format: uri
+        preview_hls_url:
+          type: string
+          format: uri
+        price_msat:
+          type: integer
+          format: int64
+        provider_hints:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateAssetProviderHintRequest'
+    ProviderHintRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - transport
+        - base_url
+        - priority
+      properties:
+        transport:
+          type: string
+        base_url:
+          type: string
+        priority:
+          type: integer
+          format: int64
+    CreateReportRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - reporter_subject
+        - target_type
+        - target_id
+        - report_type
+        - evidence
+      properties:
+        reporter_subject:
+          type: string
+        target_type:
+          type: string
+        target_id:
+          type: string
+        report_type:
+          type: string
+        evidence:
+          type: string
+    RegisterProviderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - provider_id
+        - public_key
+        - transport
+        - base_url
+      properties:
+        provider_id:
+          type: string
+        public_key:
+          type: string
+        transport:
+          type: string
+        base_url:
+          type: string
+        region:
+          type: string
+    AnnounceProviderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - asset_id
+        - transport
+        - base_url
+        - priority
+        - nonce
+        - signature
+      properties:
+        asset_id:
+          type: string
+        transport:
+          type: string
+        base_url:
+          type: string
+        priority:
+          type: integer
+          format: int64
+        expires_in_seconds:
+          type: integer
+          format: int64
+        expires_at:
+          type: integer
+          format: int64
+        nonce:
+          type: string
+        signature:
+          type: string

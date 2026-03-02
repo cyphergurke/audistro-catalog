@@ -4,11 +4,14 @@ import (
 	"net/http"
 	"time"
 
+	"audistro-catalog/internal/apidocs"
 	"audistro-catalog/internal/noncecache"
 	"audistro-catalog/internal/providerhints"
 	"audistro-catalog/internal/ratelimit"
 	artistsvc "audistro-catalog/internal/service/artists"
 	assetsvc "audistro-catalog/internal/service/assets"
+	bootstrapsvc "audistro-catalog/internal/service/bootstrap"
+	ingestsvc "audistro-catalog/internal/service/ingest"
 	payeessvc "audistro-catalog/internal/service/payees"
 	providersvc "audistro-catalog/internal/service/providers"
 	reportsvc "audistro-catalog/internal/service/reports"
@@ -18,6 +21,8 @@ type Dependencies struct {
 	ArtistsService               *artistsvc.Service
 	PayeesService                *payeessvc.Service
 	AssetsService                *assetsvc.Service
+	BootstrapService             *bootstrapsvc.Service
+	IngestService                *ingestsvc.Service
 	ReportsService               *reportsvc.Service
 	ProvidersService             *providersvc.Service
 	ProviderHintsService         *providerhints.Service
@@ -36,6 +41,9 @@ type Dependencies struct {
 	PlaybackDefaultProviderLimit int64
 	PlaybackMaxProviderLimit     int64
 	InsecureTransportAllowed     bool
+	AdminEnabled                 bool
+	AdminToken                   string
+	AdminUploadMaxBodyBytes      int64
 }
 
 // NewRouter registers API routes.
@@ -54,7 +62,14 @@ func NewRouter(deps Dependencies) *http.ServeMux {
 	announceLimiter := ratelimit.New(deps.RateLimitAnnounceRPS, int(deps.RateLimitAnnounceBurst), time.Duration(deps.RateLimitCacheTTLSeconds)*time.Second)
 	playbackLimiter := ratelimit.New(deps.RateLimitPlaybackRPS, int(deps.RateLimitPlaybackBurst), time.Duration(deps.RateLimitCacheTTLSeconds)*time.Second)
 
+	mux.Handle("GET /openapi.yaml", apidocs.YAMLHandler())
+	mux.Handle("GET /openapi.json", apidocs.JSONHandler())
+	mux.Handle("GET /docs", apidocs.DocsHandler())
+	mux.Handle("GET /docs/", apidocs.DocsHandler())
 	mux.HandleFunc("GET /healthz", Healthz)
+	mux.HandleFunc("POST /v1/admin/bootstrap/artist", BootstrapArtistHandler(deps))
+	mux.HandleFunc("POST /v1/admin/assets/upload", AdminUploadAssetHandler(deps))
+	mux.HandleFunc("GET /v1/admin/ingest/jobs/{jobId}", GetIngestJobHandler(deps))
 	mux.HandleFunc("POST /v1/artists", CreateArtistHandler(deps.ArtistsService))
 	mux.HandleFunc("GET /v1/artists/{handle}", GetArtistByHandleHandler(deps.ArtistsService))
 	mux.HandleFunc("POST /v1/payees", CreatePayeeHandler(deps.PayeesService))

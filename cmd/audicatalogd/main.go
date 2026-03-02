@@ -16,6 +16,8 @@ import (
 	"audistro-catalog/internal/providerhints"
 	artistsvc "audistro-catalog/internal/service/artists"
 	assetsvc "audistro-catalog/internal/service/assets"
+	bootstrapsvc "audistro-catalog/internal/service/bootstrap"
+	ingestsvc "audistro-catalog/internal/service/ingest"
 	payeessvc "audistro-catalog/internal/service/payees"
 	providersvc "audistro-catalog/internal/service/providers"
 	reportsvc "audistro-catalog/internal/service/reports"
@@ -39,6 +41,7 @@ func main() {
 	moderationRepo := storesqlite.NewModerationRepo(db)
 	payeesRepo := storesqlite.NewPayeesRepo(db)
 	assetsRepo := storesqlite.NewAssetsRepo(db)
+	ingestJobsRepo := storesqlite.NewIngestJobsRepo(db)
 	providerHintsRepo := storesqlite.NewProviderHintsRepo(db)
 	reportsRepo := storesqlite.NewReportsRepo(db)
 	verificationRepo := storesqlite.NewVerificationRepo(db)
@@ -53,6 +56,18 @@ func main() {
 	artistsService := artistsvc.NewService(artistsRepo, moderationRepo, verificationRepo)
 	payeesService := payeessvc.NewService(payeesRepo, artistsRepo)
 	assetsService := assetsvc.NewService(artistsRepo, payeesRepo, assetsRepo, providerHintsRepo, moderationRepo)
+	bootstrapService, err := bootstrapsvc.NewService(artistsRepo, payeesRepo)
+	if err != nil {
+		logger.Fatalf("build bootstrap service failed: %v", err)
+	}
+	primaryTarget, err := cfg.PrimaryProviderTarget()
+	if err != nil {
+		logger.Fatalf("resolve primary provider target failed: %v", err)
+	}
+	ingestService, err := ingestsvc.NewService(artistsRepo, payeesRepo, assetsRepo, ingestJobsRepo, cfg.StoragePath, primaryTarget.PublicBaseURL)
+	if err != nil {
+		logger.Fatalf("build ingest service failed: %v", err)
+	}
 	reportsService := reportsvc.NewService(reportsRepo, moderationRepo, artistsRepo, verificationRepo)
 	providersService := providersvc.NewService(providerRegistryRepo, assetsRepo, cfg.MaxAnnounceTTLSeconds, cfg.MaxProvidersPerAsset, cfg.IsInsecureTransportAllowed())
 	providerHintsService := providerhints.NewService(providersService, providerhints.ServiceConfig{
@@ -74,6 +89,8 @@ func main() {
 		ArtistsService:               artistsService,
 		PayeesService:                payeesService,
 		AssetsService:                assetsService,
+		BootstrapService:             bootstrapService,
+		IngestService:                ingestService,
 		ReportsService:               reportsService,
 		ProvidersService:             providersService,
 		ProviderHintsService:         providerHintsService,
@@ -92,6 +109,9 @@ func main() {
 		PlaybackDefaultProviderLimit: cfg.PlaybackDefaultProviderLimit,
 		PlaybackMaxProviderLimit:     cfg.PlaybackMaxProviderLimit,
 		InsecureTransportAllowed:     cfg.IsInsecureTransportAllowed(),
+		AdminEnabled:                 cfg.Env == "dev",
+		AdminToken:                   cfg.AdminToken,
+		AdminUploadMaxBodyBytes:      cfg.AdminUploadMaxBodyBytes,
 	})
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Fatalf("server failed: %v", err)

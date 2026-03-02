@@ -15,6 +15,8 @@ import (
 	"audistro-catalog/internal/providerhints"
 	artistsvc "audistro-catalog/internal/service/artists"
 	assetsvc "audistro-catalog/internal/service/assets"
+	bootstrapsvc "audistro-catalog/internal/service/bootstrap"
+	ingestsvc "audistro-catalog/internal/service/ingest"
 	payeessvc "audistro-catalog/internal/service/payees"
 	providersvc "audistro-catalog/internal/service/providers"
 	reportsvc "audistro-catalog/internal/service/reports"
@@ -40,6 +42,9 @@ type testAppConfig struct {
 	rateLimitPlaybackBurst       int64
 	rateLimitCacheTTLSeconds     int64
 	insecureTransportAllowed     bool
+	adminEnabled                 bool
+	adminToken                   string
+	adminUploadMaxBodyBytes      int64
 }
 
 func newTestApp(t *testing.T) *testApp {
@@ -99,6 +104,7 @@ func newTestAppWithConfig(t *testing.T, cfg testAppConfig) *testApp {
 	payeesRepo := storesqlite.NewPayeesRepo(db)
 	assetsRepo := storesqlite.NewAssetsRepo(db)
 	providerHintsRepo := storesqlite.NewProviderHintsRepo(db)
+	ingestJobsRepo := storesqlite.NewIngestJobsRepo(db)
 	reportsRepo := storesqlite.NewReportsRepo(db)
 	verificationRepo := storesqlite.NewVerificationRepo(db)
 	providerRegistryRepo := storesqlite.NewProviderRegistryRepo(db)
@@ -106,6 +112,14 @@ func newTestAppWithConfig(t *testing.T, cfg testAppConfig) *testApp {
 	artistsService := artistsvc.NewService(artistsRepo, moderationRepo, verificationRepo)
 	payeesService := payeessvc.NewService(payeesRepo, artistsRepo)
 	assetsService := assetsvc.NewService(artistsRepo, payeesRepo, assetsRepo, providerHintsRepo, moderationRepo)
+	bootstrapService, err := bootstrapsvc.NewService(artistsRepo, payeesRepo)
+	if err != nil {
+		t.Fatalf("create bootstrap service: %v", err)
+	}
+	ingestService, err := ingestsvc.NewService(artistsRepo, payeesRepo, assetsRepo, ingestJobsRepo, tmpDir, "http://localhost:18082")
+	if err != nil {
+		t.Fatalf("create ingest service: %v", err)
+	}
 	reportsService := reportsvc.NewService(reportsRepo, moderationRepo, artistsRepo, verificationRepo)
 	providersService := providersvc.NewService(providerRegistryRepo, assetsRepo, 1209600, 200, cfg.insecureTransportAllowed)
 	providerHintsService := providerhints.NewService(providersService, providerhints.ServiceConfig{
@@ -128,6 +142,8 @@ func newTestAppWithConfig(t *testing.T, cfg testAppConfig) *testApp {
 		ArtistsService:               artistsService,
 		PayeesService:                payeesService,
 		AssetsService:                assetsService,
+		BootstrapService:             bootstrapService,
+		IngestService:                ingestService,
 		ReportsService:               reportsService,
 		ProvidersService:             providersService,
 		ProviderHintsService:         providerHintsService,
@@ -146,6 +162,9 @@ func newTestAppWithConfig(t *testing.T, cfg testAppConfig) *testApp {
 		PlaybackDefaultProviderLimit: cfg.playbackDefaultProviderLimit,
 		PlaybackMaxProviderLimit:     cfg.playbackMaxProviderLimit,
 		InsecureTransportAllowed:     cfg.insecureTransportAllowed,
+		AdminEnabled:                 cfg.adminEnabled,
+		AdminToken:                   cfg.adminToken,
+		AdminUploadMaxBodyBytes:      cfg.adminUploadMaxBodyBytes,
 	})
 
 	return &testApp{

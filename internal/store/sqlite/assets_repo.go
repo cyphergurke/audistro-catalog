@@ -23,19 +23,7 @@ func NewAssetsRepo(db *sql.DB) *AssetsRepo {
 
 func (r *AssetsRepo) CreateAsset(ctx context.Context, params repo.CreateAssetParams) (model.Asset, error) {
 	now := time.Now().Unix()
-	asset := model.Asset{
-		AssetID:       params.AssetID,
-		ArtistID:      params.ArtistID,
-		PayeeID:       params.PayeeID,
-		Title:         params.Title,
-		DurationMS:    params.DurationMS,
-		ContentID:     params.ContentID,
-		HLSMasterURL:  params.HLSMasterURL,
-		PreviewHLSURL: params.PreviewHLSURL,
-		PriceMSat:     params.PriceMSat,
-		CreatedAt:     now,
-		UpdatedAt:     now,
-	}
+	asset := newAsset(params, now, now)
 
 	stmt, err := r.db.PrepareContext(ctx, `
 		INSERT INTO assets(
@@ -64,6 +52,61 @@ func (r *AssetsRepo) CreateAsset(ctx context.Context, params repo.CreateAssetPar
 	)
 	if err != nil {
 		return model.Asset{}, fmt.Errorf("create asset: %w", err)
+	}
+
+	return asset, nil
+}
+
+func (r *AssetsRepo) UpsertAsset(ctx context.Context, params repo.UpsertAssetParams) (model.Asset, error) {
+	now := time.Now().Unix()
+	var createdAt int64
+	err := r.db.QueryRowContext(ctx, `SELECT created_at FROM assets WHERE asset_id = ?`, string(params.AssetID)).Scan(&createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			createdAt = now
+		} else {
+			return model.Asset{}, fmt.Errorf("lookup asset before upsert: %w", err)
+		}
+	}
+	asset := newAsset(params, createdAt, now)
+
+	stmt, err := r.db.PrepareContext(ctx, `
+		INSERT INTO assets(
+			asset_id, artist_id, payee_id, title, duration_ms, content_id, hls_master_url,
+			preview_hls_url, price_msat, created_at, updated_at
+		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(asset_id) DO UPDATE SET
+			artist_id=excluded.artist_id,
+			payee_id=excluded.payee_id,
+			title=excluded.title,
+			duration_ms=excluded.duration_ms,
+			content_id=excluded.content_id,
+			hls_master_url=excluded.hls_master_url,
+			preview_hls_url=excluded.preview_hls_url,
+			price_msat=excluded.price_msat,
+			updated_at=excluded.updated_at
+	`)
+	if err != nil {
+		return model.Asset{}, fmt.Errorf("prepare upsert asset: %w", err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(
+		ctx,
+		string(asset.AssetID),
+		string(asset.ArtistID),
+		string(asset.PayeeID),
+		asset.Title,
+		asset.DurationMS,
+		asset.ContentID,
+		asset.HLSMasterURL,
+		asset.PreviewHLSURL,
+		asset.PriceMSat,
+		asset.CreatedAt,
+		asset.UpdatedAt,
+	)
+	if err != nil {
+		return model.Asset{}, fmt.Errorf("upsert asset: %w", err)
 	}
 
 	return asset, nil
@@ -173,4 +216,20 @@ func scanAssetRows(rows *sql.Rows) (model.Asset, error) {
 	asset.ArtistID = model.ArtistID(artistIDRaw)
 	asset.PayeeID = model.PayeeID(payeeIDRaw)
 	return asset, nil
+}
+
+func newAsset(params repo.CreateAssetParams, createdAt int64, updatedAt int64) model.Asset {
+	return model.Asset{
+		AssetID:       params.AssetID,
+		ArtistID:      params.ArtistID,
+		PayeeID:       params.PayeeID,
+		Title:         params.Title,
+		DurationMS:    params.DurationMS,
+		ContentID:     params.ContentID,
+		HLSMasterURL:  params.HLSMasterURL,
+		PreviewHLSURL: params.PreviewHLSURL,
+		PriceMSat:     params.PriceMSat,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+	}
 }
