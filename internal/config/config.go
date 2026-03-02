@@ -111,7 +111,7 @@ func (c Config) AdminEnabled() bool {
 
 func (c Config) Validate() error {
 	if c.AdminEnabled() && strings.TrimSpace(c.AdminToken) == "" {
-		return fmt.Errorf("CATALOG_ADMIN_TOKEN is required when CATALOG_ENV=dev")
+		return fmt.Errorf("CATALOG_ADMIN_TOKEN is required when AUDISTRO_ENV=dev")
 	}
 	return nil
 }
@@ -123,7 +123,10 @@ func LoadFromEnv() Config {
 		httpAddr = defaultHTTPAddr
 	}
 
-	env := os.Getenv("AUDICATALOG_ENV")
+	env := os.Getenv("AUDISTRO_ENV")
+	if env == "" {
+		env = os.Getenv("AUDICATALOG_ENV")
+	}
 	if env == "" {
 		env = os.Getenv("CATALOG_ENV")
 	}
@@ -131,7 +134,7 @@ func LoadFromEnv() Config {
 		env = defaultEnv
 	}
 	env = strings.ToLower(strings.TrimSpace(env))
-	if env != "dev" && env != "prod" {
+	if env != "dev" && env != "prod" && env != "test" {
 		env = defaultEnv
 	}
 

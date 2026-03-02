@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"audistro-catalog/internal/config"
+	"audistro-catalog/internal/envcheck"
 	"audistro-catalog/internal/httpapi"
 	"audistro-catalog/internal/httpapi/handlers"
 	"audistro-catalog/internal/jobs"
@@ -27,6 +28,8 @@ import (
 )
 
 func main() {
+	envcheck.MustValidate()
+
 	cfg := config.LoadFromEnv()
 	logger := log.New(os.Stdout, "", log.LstdFlags|log.LUTC)
 	if err := cfg.Validate(); err != nil {

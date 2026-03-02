@@ -22,6 +22,7 @@ WORKDIR /app
 COPY --from=builder /out/audicatalogd /app/audicatalogd
 COPY --from=builder /out/audicatalog-worker /app/audicatalog-worker
 COPY --from=builder /out/audicatalog-snapshot /app/audicatalog-snapshot
+COPY ops /app/ops
 
 VOLUME ["/var/lib/audicatalog"]
 EXPOSE 8080

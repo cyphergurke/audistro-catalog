@@ -131,11 +131,12 @@ func TestLoadFromEnvAllowsDisablingOpenAPIValidation(t *testing.T) {
 
 func TestValidateRequiresAdminTokenInDev(t *testing.T) {
 	t.Setenv("AUDICATALOG_ENV", "dev")
+	t.Setenv("AUDISTRO_ENV", "")
 	t.Setenv("CATALOG_ENV", "")
 	t.Setenv("CATALOG_ADMIN_TOKEN", "")
 
 	cfg := LoadFromEnv()
-	if err := cfg.Validate(); err == nil || err.Error() != "CATALOG_ADMIN_TOKEN is required when CATALOG_ENV=dev" {
+	if err := cfg.Validate(); err == nil || err.Error() != "CATALOG_ADMIN_TOKEN is required when AUDISTRO_ENV=dev" {
 		t.Fatalf("expected dev admin token validation error, got %v", err)
 	}
 }
@@ -166,5 +167,16 @@ func TestReadOnlyDisablesAdminEndpointsEvenInDev(t *testing.T) {
 	}
 	if cfg.AdminEnabled() {
 		t.Fatalf("expected admin disabled when read-only")
+	}
+}
+
+func TestLoadFromEnvPrefersAudistroEnv(t *testing.T) {
+	t.Setenv("AUDISTRO_ENV", "dev")
+	t.Setenv("AUDICATALOG_ENV", "prod")
+	t.Setenv("CATALOG_ENV", "prod")
+
+	cfg := LoadFromEnv()
+	if cfg.Env != "dev" {
+		t.Fatalf("expected AUDISTRO_ENV to win, got %q", cfg.Env)
 	}
 }

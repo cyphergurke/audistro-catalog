@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"audistro-catalog/internal/config"
+	"audistro-catalog/internal/envcheck"
 	ingestsvc "audistro-catalog/internal/service/ingest"
 	"audistro-catalog/internal/store"
 	storesqlite "audistro-catalog/internal/store/sqlite"
@@ -19,6 +20,8 @@ import (
 )
 
 func main() {
+	envcheck.MustValidate()
+
 	cfg := config.LoadFromEnv()
 	logger := log.New(os.Stdout, "", log.LstdFlags|log.LUTC)
 	if err := cfg.Validate(); err != nil {
