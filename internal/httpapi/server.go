@@ -27,6 +27,7 @@ func NewServer(cfg config.Config, logger *log.Logger, deps handlers.Dependencies
 		LoadSpec:        apidocs.LoadSpec,
 		IncludePrefixes: []string{"/v1/"},
 	})(handler)
+	handler = middleware.ReadOnly(middleware.ReadOnlyConfig{Enabled: cfg.ReadOnly})(handler)
 	handler = middleware.RequestID(handler)
 
 	return &Server{

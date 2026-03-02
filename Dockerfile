@@ -10,7 +10,8 @@ RUN go mod download
 
 COPY . .
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/audicatalogd ./cmd/audicatalogd \
-    && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/audicatalog-worker ./cmd/audicatalog-worker
+    && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/audicatalog-worker ./cmd/audicatalog-worker \
+    && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/audicatalog-snapshot ./cmd/audicatalog-snapshot
 
 FROM debian:bookworm-slim
 RUN apt-get update \
@@ -20,6 +21,7 @@ WORKDIR /app
 
 COPY --from=builder /out/audicatalogd /app/audicatalogd
 COPY --from=builder /out/audicatalog-worker /app/audicatalog-worker
+COPY --from=builder /out/audicatalog-snapshot /app/audicatalog-snapshot
 
 VOLUME ["/var/lib/audicatalog"]
 EXPOSE 8080

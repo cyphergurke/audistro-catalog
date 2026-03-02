@@ -16,6 +16,10 @@ import (
 )
 
 func testHandler() http.Handler {
+	return testHandlerWithReadOnly(false)
+}
+
+func testHandlerWithReadOnly(readOnly bool) http.Handler {
 	h := handlers.NewRouter(handlers.Dependencies{})
 	logger := log.New(io.Discard, "", 0)
 	handler := middlewarepkg.Recover(logger)(h)
@@ -24,6 +28,7 @@ func testHandler() http.Handler {
 		LoadSpec:        apidocs.LoadSpec,
 		IncludePrefixes: []string{"/v1/"},
 	})(handler)
+	handler = middlewarepkg.ReadOnly(middlewarepkg.ReadOnlyConfig{Enabled: readOnly})(handler)
 	handler = middlewarepkg.RequestID(handler)
 	return handler
 }
@@ -131,6 +136,34 @@ func TestOpenAPIValidationRejectsInvalidAssetIDPathBeforeHandler(t *testing.T) {
 		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
 	}
 	assertInvalidRequest(t, rec)
+}
+
+func TestReadOnlyRejectsMutatingProviderRequest(t *testing.T) {
+	h := testHandlerWithReadOnly(true)
+	req := httptest.NewRequest(http.MethodPost, "/v1/providers", bytes.NewReader([]byte(`{}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload["error"] != "read_only" {
+		t.Fatalf("unexpected response: %#v", payload)
+	}
+}
+
+func TestReadOnlyAllowsPlaybackRead(t *testing.T) {
+	h := testHandlerWithReadOnly(true)
+	req := httptest.NewRequest(http.MethodGet, "/v1/playback/asset_ok", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code == http.StatusForbidden {
+		t.Fatalf("expected read endpoint to bypass read-only block")
+	}
 }
 
 func assertInvalidRequest(t *testing.T, rec *httptest.ResponseRecorder) {

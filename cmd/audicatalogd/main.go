@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"log"
 	"net/http"
@@ -34,7 +35,13 @@ func main() {
 
 	logger.Printf("starting audicatalogd env=%s addr=%s", cfg.Env, cfg.HTTPAddr)
 
-	db, err := store.OpenSQLite(context.Background(), cfg.DBPath)
+	var db *sql.DB
+	var err error
+	if cfg.ReadOnly {
+		db, err = store.OpenSQLiteReadOnly(context.Background(), cfg.DBPath)
+	} else {
+		db, err = store.OpenSQLite(context.Background(), cfg.DBPath)
+	}
 	if err != nil {
 		logger.Fatalf("open database failed: %v", err)
 	}
@@ -54,7 +61,9 @@ func main() {
 	jobsCtx, jobsCancel := context.WithCancel(context.Background())
 	defer jobsCancel()
 	nonceCache.StartJanitor(jobsCtx, time.Duration(cfg.NonceCacheTTLSeconds)*time.Second)
-	jobs.StartCleanupExpiredProviderAssets(jobsCtx, logger, providerRegistryRepo, time.Duration(cfg.CleanupIntervalSeconds)*time.Second)
+	if !cfg.ReadOnly {
+		jobs.StartCleanupExpiredProviderAssets(jobsCtx, logger, providerRegistryRepo, time.Duration(cfg.CleanupIntervalSeconds)*time.Second)
+	}
 
 	artistsService := artistsvc.NewService(artistsRepo, moderationRepo, verificationRepo)
 	payeesService := payeessvc.NewService(payeesRepo, artistsRepo)

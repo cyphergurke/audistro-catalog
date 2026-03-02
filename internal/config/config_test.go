@@ -153,3 +153,18 @@ func TestValidateAllowsProdWithoutAdminToken(t *testing.T) {
 		t.Fatalf("expected admin disabled in prod")
 	}
 }
+
+func TestReadOnlyDisablesAdminEndpointsEvenInDev(t *testing.T) {
+	t.Setenv("AUDICATALOG_ENV", "dev")
+	t.Setenv("CATALOG_ENV", "")
+	t.Setenv("CATALOG_READ_ONLY", "true")
+	t.Setenv("CATALOG_ADMIN_TOKEN", "dev-admin-token")
+
+	cfg := LoadFromEnv()
+	if !cfg.ReadOnly {
+		t.Fatalf("expected read-only mode enabled")
+	}
+	if cfg.AdminEnabled() {
+		t.Fatalf("expected admin disabled when read-only")
+	}
+}
