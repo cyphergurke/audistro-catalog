@@ -67,9 +67,11 @@ func NewRouter(deps Dependencies) *http.ServeMux {
 	mux.Handle("GET /docs", apidocs.DocsHandler())
 	mux.Handle("GET /docs/", apidocs.DocsHandler())
 	mux.HandleFunc("GET /healthz", Healthz)
-	mux.HandleFunc("POST /v1/admin/bootstrap/artist", BootstrapArtistHandler(deps))
-	mux.HandleFunc("POST /v1/admin/assets/upload", AdminUploadAssetHandler(deps))
-	mux.HandleFunc("GET /v1/admin/ingest/jobs/{jobId}", GetIngestJobHandler(deps))
+	if deps.AdminEnabled {
+		mux.HandleFunc("POST /v1/admin/bootstrap/artist", BootstrapArtistHandler(deps))
+		mux.HandleFunc("POST /v1/admin/assets/upload", AdminUploadAssetHandler(deps))
+		mux.HandleFunc("GET /v1/admin/ingest/jobs/{jobId}", GetIngestJobHandler(deps))
+	}
 	mux.HandleFunc("POST /v1/artists", CreateArtistHandler(deps.ArtistsService))
 	mux.HandleFunc("GET /v1/artists/{handle}", GetArtistByHandleHandler(deps.ArtistsService))
 	mux.HandleFunc("POST /v1/payees", CreatePayeeHandler(deps.PayeesService))

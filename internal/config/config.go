@@ -104,6 +104,17 @@ type Config struct {
 	WorkerStaleSeconds              int64
 }
 
+func (c Config) AdminEnabled() bool {
+	return c.Env == "dev"
+}
+
+func (c Config) Validate() error {
+	if c.AdminEnabled() && strings.TrimSpace(c.AdminToken) == "" {
+		return fmt.Errorf("CATALOG_ADMIN_TOKEN is required when CATALOG_ENV=dev")
+	}
+	return nil
+}
+
 // LoadFromEnv reads configuration from environment variables.
 func LoadFromEnv() Config {
 	httpAddr := os.Getenv("AUDICATALOG_HTTP_ADDR")

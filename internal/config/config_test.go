@@ -128,3 +128,28 @@ func TestLoadFromEnvAllowsDisablingOpenAPIValidation(t *testing.T) {
 		t.Fatalf("expected openapi validation to be disabled")
 	}
 }
+
+func TestValidateRequiresAdminTokenInDev(t *testing.T) {
+	t.Setenv("AUDICATALOG_ENV", "dev")
+	t.Setenv("CATALOG_ENV", "")
+	t.Setenv("CATALOG_ADMIN_TOKEN", "")
+
+	cfg := LoadFromEnv()
+	if err := cfg.Validate(); err == nil || err.Error() != "CATALOG_ADMIN_TOKEN is required when CATALOG_ENV=dev" {
+		t.Fatalf("expected dev admin token validation error, got %v", err)
+	}
+}
+
+func TestValidateAllowsProdWithoutAdminToken(t *testing.T) {
+	t.Setenv("AUDICATALOG_ENV", "prod")
+	t.Setenv("CATALOG_ENV", "")
+	t.Setenv("CATALOG_ADMIN_TOKEN", "")
+
+	cfg := LoadFromEnv()
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("expected prod config to validate without admin token, got %v", err)
+	}
+	if cfg.AdminEnabled() {
+		t.Fatalf("expected admin disabled in prod")
+	}
+}

@@ -28,6 +28,9 @@ import (
 func main() {
 	cfg := config.LoadFromEnv()
 	logger := log.New(os.Stdout, "", log.LstdFlags|log.LUTC)
+	if err := cfg.Validate(); err != nil {
+		logger.Fatalf("invalid configuration: %v", err)
+	}
 
 	logger.Printf("starting audicatalogd env=%s addr=%s", cfg.Env, cfg.HTTPAddr)
 
@@ -109,7 +112,7 @@ func main() {
 		PlaybackDefaultProviderLimit: cfg.PlaybackDefaultProviderLimit,
 		PlaybackMaxProviderLimit:     cfg.PlaybackMaxProviderLimit,
 		InsecureTransportAllowed:     cfg.IsInsecureTransportAllowed(),
-		AdminEnabled:                 cfg.Env == "dev",
+		AdminEnabled:                 cfg.AdminEnabled(),
 		AdminToken:                   cfg.AdminToken,
 		AdminUploadMaxBodyBytes:      cfg.AdminUploadMaxBodyBytes,
 	})

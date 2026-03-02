@@ -63,6 +63,18 @@ func TestOpenAPIEndpoints(t *testing.T) {
 	}
 }
 
+func TestAdminRoutesReturn404WhenDisabled(t *testing.T) {
+	h := handlers.NewRouter(handlers.Dependencies{
+		AdminEnabled: false,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/v1/admin/bootstrap/artist", bytes.NewReader([]byte(`{}`)))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 when admin routes disabled, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestOpenAPIValidationRejectsWrongContentTypeForArtists(t *testing.T) {
 	h := testHandler()
 	req := httptest.NewRequest(http.MethodPost, "/v1/artists", bytes.NewReader([]byte(`{"pubkey_hex":"00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff","handle":"alice","display_name":"Alice"}`)))

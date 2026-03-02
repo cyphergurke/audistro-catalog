@@ -21,6 +21,9 @@ import (
 func main() {
 	cfg := config.LoadFromEnv()
 	logger := log.New(os.Stdout, "", log.LstdFlags|log.LUTC)
+	if err := cfg.Validate(); err != nil {
+		logger.Fatalf("invalid configuration: %v", err)
+	}
 
 	db, err := store.OpenSQLite(context.Background(), cfg.DBPath)
 	if err != nil {
