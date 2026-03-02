@@ -42,6 +42,7 @@ type testAppConfig struct {
 	rateLimitPlaybackBurst       int64
 	rateLimitCacheTTLSeconds     int64
 	insecureTransportAllowed     bool
+	readOnly                     bool
 	adminEnabled                 bool
 	adminToken                   string
 	adminUploadMaxBodyBytes      int64
@@ -167,8 +168,10 @@ func newTestAppWithConfig(t *testing.T, cfg testAppConfig) *testApp {
 		AdminUploadMaxBodyBytes:      cfg.adminUploadMaxBodyBytes,
 	})
 
+	handler := middleware.ReadOnly(middleware.ReadOnlyConfig{Enabled: cfg.readOnly})(router)
+
 	return &testApp{
-		handler: middleware.RequestID(router),
+		handler: middleware.RequestID(handler),
 		db:      db,
 	}
 }
