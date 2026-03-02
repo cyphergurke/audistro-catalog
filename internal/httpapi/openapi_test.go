@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"audistro-catalog/internal/apidocs"
 	"audistro-catalog/internal/httpapi/handlers"
 	middlewarepkg "audistro-catalog/internal/httpapi/middleware"
 )
@@ -18,7 +20,10 @@ func testHandler() http.Handler {
 	logger := log.New(io.Discard, "", 0)
 	handler := middlewarepkg.Recover(logger)(h)
 	handler = middlewarepkg.AccessLog(logger)(handler)
-	handler = openAPIValidationMiddleware(handler)
+	handler = middlewarepkg.OpenAPIValidate(middlewarepkg.OpenAPIValidateConfig{
+		LoadSpec:        apidocs.LoadSpec,
+		IncludePrefixes: []string{"/v1/"},
+	})(handler)
 	handler = middlewarepkg.RequestID(handler)
 	return handler
 }
@@ -67,29 +72,66 @@ func TestOpenAPIValidationRejectsWrongContentTypeForArtists(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
 	}
-	var out validationAPIErrorResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if out.Error.Code != "invalid_request" {
-		t.Fatalf("unexpected response: %#v", out)
-	}
+	assertInvalidRequest(t, rec)
 }
 
-func TestOpenAPIValidationRejectsWrongContentTypeForProviderRegistration(t *testing.T) {
+func TestOpenAPIValidationRejectsMissingRequiredFieldForBootstrapArtist(t *testing.T) {
 	h := testHandler()
-	req := httptest.NewRequest(http.MethodPost, "/v1/providers", bytes.NewReader([]byte(`{"provider_id":"prov1","public_key":"abc","transport":"http","base_url":"http://localhost:8080"}`)))
-	req.Header.Set("Content-Type", "text/plain")
+	req := httptest.NewRequest(http.MethodPost, "/v1/admin/bootstrap/artist", bytes.NewReader([]byte(`{"handle":"alice","payee":{"fap_public_base_url":"http://localhost:18081","fap_payee_id":"fap_alice"}}`)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Admin-Token", "dev-admin-token")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
 	}
-	var out validationAPIErrorResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+	assertInvalidRequest(t, rec)
+}
+
+func TestOpenAPIValidationRejectsMissingMultipartAudioPart(t *testing.T) {
+	h := testHandler()
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	_ = writer.WriteField("artist_id", "artist_1")
+	_ = writer.WriteField("payee_id", "payee_1")
+	_ = writer.WriteField("title", "Smoke Upload")
+	_ = writer.WriteField("price_msat", "1000")
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close multipart writer: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/v1/admin/assets/upload", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("X-Admin-Token", "dev-admin-token")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	assertInvalidRequest(t, rec)
+}
+
+func TestOpenAPIValidationRejectsInvalidAssetIDPathBeforeHandler(t *testing.T) {
+	h := testHandler()
+	req := httptest.NewRequest(http.MethodGet, "/v1/playback/bad!id", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	assertInvalidRequest(t, rec)
+}
+
+func assertInvalidRequest(t *testing.T, rec *httptest.ResponseRecorder) {
+	t.Helper()
+
+	var payload map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if out.Error.Code != "invalid_request" {
-		t.Fatalf("unexpected response: %#v", out)
+	if payload["error"] != "invalid_request" {
+		t.Fatalf("unexpected response: %#v", payload)
+	}
+	if message, _ := payload["message"].(string); message == "" {
+		t.Fatalf("expected validation message, got %#v", payload)
 	}
 }

@@ -54,6 +54,8 @@ paths:
     post:
       summary: Bootstrap artist and payee mapping in dev
       operationId: bootstrapArtist
+      parameters:
+        - $ref: '#/components/parameters/adminTokenHeader'
       requestBody:
         required: true
         content:
@@ -77,6 +79,8 @@ paths:
     post:
       summary: Upload MP3 source and queue ingest job in dev
       operationId: uploadAdminAsset
+      parameters:
+        - $ref: '#/components/parameters/adminTokenHeader'
       requestBody:
         required: true
         content:
@@ -101,6 +105,7 @@ paths:
       summary: Get ingest job status in dev
       operationId: getIngestJob
       parameters:
+        - $ref: '#/components/parameters/adminTokenHeader'
         - $ref: '#/components/parameters/jobId'
       responses:
         '200':
@@ -429,36 +434,47 @@ paths:
                 $ref: '#/components/schemas/APIErrorResponse'
 components:
   parameters:
+    adminTokenHeader:
+      name: X-Admin-Token
+      in: header
+      required: true
+      schema:
+        type: string
     assetId:
       name: assetId
       in: path
       required: true
       schema:
         type: string
+        pattern: '^[a-zA-Z0-9_-]{3,80}$'
     payeeId:
       name: payeeId
       in: path
       required: true
       schema:
         type: string
+        pattern: '^[a-zA-Z0-9_-]{1,128}$'
     handle:
       name: handle
       in: path
       required: true
       schema:
         type: string
+        pattern: '^[a-z0-9][a-z0-9_]{2,31}$'
     providerId:
       name: providerId
       in: path
       required: true
       schema:
         type: string
+        pattern: '^[a-zA-Z0-9_-]{1,128}$'
     jobId:
       name: jobId
       in: path
       required: true
       schema:
         type: string
+        pattern: '^[a-zA-Z0-9_-]{1,128}$'
     targetType:
       name: targetType
       in: path

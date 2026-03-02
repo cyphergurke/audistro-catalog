@@ -110,3 +110,21 @@ func TestLoadFromEnvFallsBackToSingleProviderTarget(t *testing.T) {
 		t.Fatalf("unexpected fallback provider target: %#v", cfg.ProviderTargets[0])
 	}
 }
+
+func TestLoadFromEnvOpenAPIValidationEnabledByDefault(t *testing.T) {
+	t.Setenv("CATALOG_DISABLE_OPENAPI_VALIDATION", "")
+
+	cfg := LoadFromEnv()
+	if cfg.DisableOpenAPIValidation {
+		t.Fatalf("expected openapi validation enabled by default")
+	}
+}
+
+func TestLoadFromEnvAllowsDisablingOpenAPIValidation(t *testing.T) {
+	t.Setenv("CATALOG_DISABLE_OPENAPI_VALIDATION", "true")
+
+	cfg := LoadFromEnv()
+	if !cfg.DisableOpenAPIValidation {
+		t.Fatalf("expected openapi validation to be disabled")
+	}
+}

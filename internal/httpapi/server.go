@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"audistro-catalog/internal/apidocs"
 	"audistro-catalog/internal/config"
 	"audistro-catalog/internal/httpapi/handlers"
 	"audistro-catalog/internal/httpapi/middleware"
@@ -21,7 +22,11 @@ func NewServer(cfg config.Config, logger *log.Logger, deps handlers.Dependencies
 	var handler http.Handler = routes
 	handler = middleware.Recover(logger)(handler)
 	handler = middleware.AccessLog(logger)(handler)
-	handler = openAPIValidationMiddleware(handler)
+	handler = middleware.OpenAPIValidate(middleware.OpenAPIValidateConfig{
+		Disabled:        cfg.DisableOpenAPIValidation,
+		LoadSpec:        apidocs.LoadSpec,
+		IncludePrefixes: []string{"/v1/"},
+	})(handler)
 	handler = middleware.RequestID(handler)
 
 	return &Server{

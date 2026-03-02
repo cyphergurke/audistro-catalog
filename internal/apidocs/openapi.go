@@ -16,7 +16,9 @@ const (
 )
 
 var (
-	//go:embed openapi.v1.yaml
+	// Go embed cannot traverse to ../../api, so this package embeds a synced copy.
+	// The canonical manual spec lives at services/audistro-catalog/api/openapi.v1.yaml.
+	//go:embed api/openapi.v1.yaml
 	openAPIYAML []byte
 
 	loadOpenAPISpecOnce sync.Once

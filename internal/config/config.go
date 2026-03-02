@@ -83,6 +83,7 @@ type Config struct {
 	PlaybackDefaultProviderLimit    int64
 	PlaybackMaxProviderLimit        int64
 	APISchemaVersion                int
+	DisableOpenAPIValidation        bool
 	HTTPMaxBodyBytes                int64
 	AdminUploadMaxBodyBytes         int64
 	ETagMaxAgeSeconds               int64
@@ -145,6 +146,7 @@ func LoadFromEnv() Config {
 	playbackDefaultProviderLimit := parseInt64OrDefault(os.Getenv("CATALOG_PLAYBACK_DEFAULT_PROVIDER_LIMIT"), defaultPlaybackProviderLimit)
 	playbackMaxProviderLimit := parseInt64OrDefault(os.Getenv("CATALOG_PLAYBACK_MAX_PROVIDER_LIMIT"), defaultPlaybackProviderMaxLimit)
 	apiSchemaVersion := int(parseInt64OrDefault(os.Getenv("CATALOG_API_SCHEMA_VERSION"), defaultAPISchemaVersion))
+	disableOpenAPIValidation := parseBoolOrDefault(os.Getenv("CATALOG_DISABLE_OPENAPI_VALIDATION"), false)
 	httpMaxBodyBytes := parseInt64OrDefault(os.Getenv("CATALOG_HTTP_MAX_BODY_BYTES"), defaultHTTPMaxBodyBytes)
 	adminUploadMaxBodyBytes := parseInt64OrDefault(os.Getenv("CATALOG_ADMIN_UPLOAD_MAX_BODY_BYTES"), defaultAdminUploadMaxBodyBytes)
 	etagMaxAgeSeconds := parseInt64OrDefault(os.Getenv("CATALOG_ETAG_MAX_AGE_SECONDS"), defaultETagMaxAgeSeconds)
@@ -212,6 +214,7 @@ func LoadFromEnv() Config {
 		PlaybackDefaultProviderLimit:    playbackDefaultProviderLimit,
 		PlaybackMaxProviderLimit:        playbackMaxProviderLimit,
 		APISchemaVersion:                apiSchemaVersion,
+		DisableOpenAPIValidation:        disableOpenAPIValidation,
 		HTTPMaxBodyBytes:                httpMaxBodyBytes,
 		AdminUploadMaxBodyBytes:         adminUploadMaxBodyBytes,
 		ETagMaxAgeSeconds:               etagMaxAgeSeconds,

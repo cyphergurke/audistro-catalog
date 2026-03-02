@@ -30,6 +30,9 @@ func TestOpenAPISpecCoversRegisteredEndpoints(t *testing.T) {
 
 	missing := make([]string, 0)
 	for _, ep := range registered {
+		if ep.Path == "/healthz" || ep.Path == "/readyz" {
+			continue
+		}
 		methods := specOps[normalizePath(ep.Path)]
 		if methods == nil || !methods[ep.Method] {
 			missing = append(missing, fmt.Sprintf("%s %s", ep.Method, ep.Path))
